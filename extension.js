@@ -25,6 +25,7 @@ function activate(context) {
 		
 		const filesystemPath = contextPassed.fsPath
 		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: filesystemPath ${filesystemPath}`);
+		// See "https://stackoverflow.com/questions/29496515/get-directory-from-a-file-path-or-url". Could also use "e.substr(0, e.lastIndexOf("/"))"
 		const folderPath = path.dirname(filesystemPath)
 
 		// resourceFilename
@@ -42,32 +43,12 @@ function activate(context) {
 			);
 		}
 
-		
-		
-
-		// const className = await vscode.window.showInputBox({
-		// prompt: "Class Name?"
-		// });
-
 		const className = path.parse(fileName).name;
 		if (!className) return;
 
 		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: className ${className}`);
 
-		// Allow the user to enter as many properties as they'd like:
-		// let count = 1;
-		// let property = await vscode.window.showInputBox({
-		// 	prompt: `Property #${count}? ('done' when finished)`
-		// });
 		const properties = [];
-		// while (property != "done") {
-		// 	properties.push(property);
-		// 	count++;
-		// 	property = await vscode.window.showInputBox({
-		// 		prompt: `Property #${count}? ('done' when finished)`
-		// 	});
-		// }
-
 		properties.push('parent=None');
 
 		// Create class content string:
@@ -96,10 +77,6 @@ function activate(context) {
 	${dunderStrString}`;
 
 		// Write the file to disk
-		// const folderPath = vscode.workspace.workspaceFolders[0].uri
-		// .toString()
-		// .split(":")[1];
-
 		fs.writeFile(path.join(folderPath, `${className}.py`), classString, err => {
 			if (err) {
 			  vscode.window.showErrorMessage("Something went wrong");
