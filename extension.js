@@ -80,62 +80,74 @@ function activate(context) {
 			  "Please open a directory before creating a class."
 			);
 		}
-		const workspacePath = vscode.workspace.workspaceFolders[0].uri
-		.toString()
-		.split(":")[1];
+		// const workspacePath = vscode.workspace.workspaceFolders[0].uri
+		// .toString()
+		// .split(":")[1];
+
+		const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
 		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: workspacePath ${workspacePath}`);
 		// const folderPath = vscode.workspace.workspaceFolders[0].uri
 		// .toString()
 		// .split(":")[1];
 
-		const relativeFilePath = getRelativePath(workspacePath, filesystemPath)
-		
-		const relativePythonPathParts = [];
-		relativePythonPathParts.push('parent');
-		relativePythonPathParts.push('parent');
+		const relativeFilePathBackslashes = getRelativePath(workspacePath, filesystemPath)
+		const relativeFilePath = relativeFilePathBackslashes.replace(/\\/g, "/");
+		const relativeParentPath = path.dirname(relativeFilePath)
 
+		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: relativeFilePath ${relativeFilePath}`);
+		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: relativeParentPath ${relativeParentPath}`);
+
+		const relativePythonPathParts = relativeParentPath.split("/"); // An array of the parts (like ["GUI", "UI", "NewClassDialog"])
+		// relativePythonPathParts.push('parent');
+		// relativePythonPathParts.push('parent');
+		const externalImportComment = `from ${relativePythonPathParts.join(".")} import ${className}`
 
 		const properties = [];
 		// properties.push('parent');
 
 		// Create class content string:
+		const commentHeader = `# ${className}.py
+# Generated from ${fileName} automatically by PhoPyQtClassGenerator VSCode Extension`;
+
 		const headerDefinition = `import sys
-		from datetime import datetime, timezone, timedelta
-		import numpy as np
-		from enum import Enum
-		
-		from PyQt5 import QtGui, QtWidgets, uic
-		from PyQt5.QtWidgets import QMessageBox, QToolTip, QStackedWidget, QHBoxLayout, QVBoxLayout, QSplitter, QFormLayout, QLabel, QFrame, QPushButton, QTableWidget, QTableWidgetItem
-		from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QHeaderView
-		from PyQt5.QtGui import QPainter, QBrush, QPen, QColor, QFont, QIcon
-		from PyQt5.QtCore import Qt, QPoint, QRect, QObject, QEvent, pyqtSignal, pyqtSlot, QSize, QDir
-		
-		## IMPORTS:
-		# from TODO import TODO
+from datetime import datetime, timezone, timedelta
+import numpy as np
+from enum import Enum
 
+from PyQt5 import QtGui, QtWidgets, uic
+from PyQt5.QtWidgets import QMessageBox, QToolTip, QStackedWidget, QHBoxLayout, QVBoxLayout, QSplitter, QFormLayout, QLabel, QFrame, QPushButton, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QHeaderView
+from PyQt5.QtGui import QPainter, QBrush, QPen, QColor, QFont, QIcon
+from PyQt5.QtCore import Qt, QPoint, QRect, QObject, QEvent, pyqtSignal, pyqtSlot, QSize, QDir
 
-		`;
+## IMPORTS:
+# ${externalImportComment}
 
+`;
+
+		//self.ui = uic.loadUi("GUI/UI/${className}/${fileName}", self) # Load the .ui file
 		const classDefinition = `class ${className}(QWidget):`;
-		const constructorDefinition = `def __init__(self, ${properties.join(", ")}, parent=None):`;
-		const constructorPreAssignmentInitialization = `super().__init__(parent=parent) # Call the inherited classes __init__ method
-		self.ui = uic.loadUi("GUI/UI/${className}/${fileName}", self) # Load the .ui file
-		`;
-		const constructorPostAssignmentInitialization = `
-
-		self.initUI()
-        self.show() # Show the GUI
-		`;
+		const allInitializerPropertyArguments = properties.concat(["parent=None"])
+		// const propertiesInitializerString = properties.join(", ")
+		const propertiesInitializerString = allInitializerPropertyArguments.join(", ")
+		
+		const constructorDefinition = `\tdef __init__(self, ${propertiesInitializerString}):`;
+		const constructorPreAssignmentInitialization = `\t\tsuper().__init__(parent=parent) # Call the inherited classes __init__ method
+		self.ui = uic.loadUi("${relativeFilePath}", self) # Load the .ui file
+`;
+		const constructorPostAssignmentInitialization = `\t\tself.initUI()
+		self.show() # Show the GUI
+`;
 		
 		const constructorAssignments = properties
 		.map(property => `self.${property} = ${property}\n\t\t`)
 		.join("");
 
 		const initUIFunctionDefinintion = `
-		def initUI(self):
-			pass
-		`;
+	def initUI(self):
+		pass
+`;
 
 		const classGetters = properties
 		.map(
@@ -143,21 +155,22 @@ function activate(context) {
 		)
 		.join("");
 
-		const dunderStrString = `\tdef __str__():\n \t\treturn ${properties
+		const dunderStrString = `\tdef __str__(self):\n \t\treturn ${properties
 			.map(property => '"' + property + ': "' + " + " + property + ' + " , " + ')
 			.join("")
 			.slice(0, -11)}`;
 
-		const classString = `${headerDefinition}
-		${classDefinition}
-		${constructorDefinition}
-			${constructorPreAssignmentInitialization}
-			${constructorAssignments}
-			${constructorPostAssignmentInitialization}
-
-		${initUIFunctionDefinintion}
-	${classGetters}
-	${dunderStrString}`;
+		const classString = `${commentHeader}
+${headerDefinition}
+${classDefinition}
+${constructorDefinition}
+${constructorPreAssignmentInitialization}
+${constructorAssignments}
+${constructorPostAssignmentInitialization}
+${initUIFunctionDefinintion}
+${classGetters}
+${dunderStrString}
+`;
 
 		// Write the file to disk
 		fs.writeFile(path.join(folderPath, `${className}.py`), classString, err => {
