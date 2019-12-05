@@ -8,6 +8,33 @@ const path = require("path");
 // your extension is activated the very first time the command is executed
 
 /**
+ * Given a source directory and a target filename, return the relative
+ * file path from source to target.
+ * @param source {String} directory path to start from for traversal
+ * @param target {String} directory path and filename to seek from source
+ * @return Relative path (e.g. "../../style.css") as {String}
+ */
+function getRelativePath(source, target) {
+	var sep = (source.indexOf("/") !== -1) ? "/" : "\\",
+		targetArr = target.split(sep),
+		sourceArr = source.split(sep),
+		filename = targetArr.pop(),
+		targetPath = targetArr.join(sep),
+		relativePath = "";
+	
+	while (targetPath.indexOf(sourceArr.join(sep)) === -1) {
+		sourceArr.pop();
+		relativePath += ".." + sep;
+	}
+	
+	var relPathArr = targetArr.slice(sourceArr.length);
+	relPathArr.length && (relativePath += relPathArr.join(sep) + sep);
+	
+	return relativePath + filename;
+}
+
+
+/**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
@@ -23,10 +50,10 @@ function activate(context) {
 		// The code you place here will be executed every time your command is executed
 		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: contextPassed ${contextPassed}`);
 		
-		const filesystemPath = contextPassed.fsPath
+		const filesystemPath = contextPassed.fsPath;
 		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: filesystemPath ${filesystemPath}`);
 		// See "https://stackoverflow.com/questions/29496515/get-directory-from-a-file-path-or-url". Could also use "e.substr(0, e.lastIndexOf("/"))"
-		const folderPath = path.dirname(filesystemPath)
+		const folderPath = path.dirname(filesystemPath);
 
 		// resourceFilename
 
@@ -34,7 +61,7 @@ function activate(context) {
 		// var filename = filesystemPath.replace(/^.*[\\\/]/, '')
 		if (!fileName) return;
 
-		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: fileName ${fileName}`);
+		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: fileName ${fileName}`);
 
 		// Copied from "https://scotch.io/tutorials/creating-a-python-class-generator-for-vs-code"
 		if (!vscode.workspace.workspaceFolders) {
@@ -46,18 +73,69 @@ function activate(context) {
 		const className = path.parse(fileName).name;
 		if (!className) return;
 
-		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: className ${className}`);
+		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: className ${className}`);
+
+		if (!vscode.workspace.workspaceFolders) {
+			return vscode.window.showErrorMessage(
+			  "Please open a directory before creating a class."
+			);
+		}
+		const workspacePath = vscode.workspace.workspaceFolders[0].uri
+		.toString()
+		.split(":")[1];
+
+		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: workspacePath ${workspacePath}`);
+		// const folderPath = vscode.workspace.workspaceFolders[0].uri
+		// .toString()
+		// .split(":")[1];
+
+		const relativeFilePath = getRelativePath(workspacePath, filesystemPath)
+		
+		const relativePythonPathParts = [];
+		relativePythonPathParts.push('parent');
+		relativePythonPathParts.push('parent');
+
 
 		const properties = [];
-		properties.push('parent=None');
+		// properties.push('parent');
 
 		// Create class content string:
-		const classDefinition = `class ${className}:`;
-		const constructorDefinition = `def __init__(self, ${properties.join(", ")}):`;
+		const headerDefinition = `import sys
+		from datetime import datetime, timezone, timedelta
+		import numpy as np
+		from enum import Enum
+		
+		from PyQt5 import QtGui, QtWidgets, uic
+		from PyQt5.QtWidgets import QMessageBox, QToolTip, QStackedWidget, QHBoxLayout, QVBoxLayout, QSplitter, QFormLayout, QLabel, QFrame, QPushButton, QTableWidget, QTableWidgetItem
+		from PyQt5.QtWidgets import QApplication, QFileSystemModel, QTreeView, QWidget, QHeaderView
+		from PyQt5.QtGui import QPainter, QBrush, QPen, QColor, QFont, QIcon
+		from PyQt5.QtCore import Qt, QPoint, QRect, QObject, QEvent, pyqtSignal, pyqtSlot, QSize, QDir
+		
+		## IMPORTS:
+		# from TODO import TODO
+
+
+		`;
+
+		const classDefinition = `class ${className}(QWidget):`;
+		const constructorDefinition = `def __init__(self, ${properties.join(", ")}, parent=None):`;
+		const constructorPreAssignmentInitialization = `super().__init__(parent=parent) # Call the inherited classes __init__ method
+		self.ui = uic.loadUi("GUI/UI/${className}/${fileName}", self) # Load the .ui file
+		`;
+		const constructorPostAssignmentInitialization = `
+
+		self.initUI()
+        self.show() # Show the GUI
+		`;
 		
 		const constructorAssignments = properties
 		.map(property => `self.${property} = ${property}\n\t\t`)
 		.join("");
+
+		const initUIFunctionDefinintion = `
+		def initUI(self):
+			pass
+		`;
 
 		const classGetters = properties
 		.map(
@@ -70,9 +148,14 @@ function activate(context) {
 			.join("")
 			.slice(0, -11)}`;
 
-		const classString = `${classDefinition}
+		const classString = `${headerDefinition}
+		${classDefinition}
 		${constructorDefinition}
+			${constructorPreAssignmentInitialization}
 			${constructorAssignments}
+			${constructorPostAssignmentInitialization}
+
+		${initUIFunctionDefinintion}
 	${classGetters}
 	${dunderStrString}`;
 
@@ -86,7 +169,7 @@ function activate(context) {
 		  });
 
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World!');
+		// vscode.window.showInformationMessage('Hello World!');
 	});
 
 	context.subscriptions.push(disposable);
