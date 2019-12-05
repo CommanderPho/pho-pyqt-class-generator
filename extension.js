@@ -23,12 +23,13 @@ function activate(context) {
 		// The code you place here will be executed every time your command is executed
 		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: contextPassed ${contextPassed}`);
 		
-		var filesystemPath = contextPassed.fsPath
-		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: filesystemPath ${filesystemPath}`);
-
+		const filesystemPath = contextPassed.fsPath
+		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: filesystemPath ${filesystemPath}`);
+		const folderPath = path.dirname(filesystemPath)
 
 		// resourceFilename
-		var fileName = filesystemPath.substring(filesystemPath.lastIndexOf('/')+1);
+
+		const fileName = filesystemPath.substring(filesystemPath.lastIndexOf('/')+1);
 		// var filename = filesystemPath.replace(/^.*[\\\/]/, '')
 		if (!fileName) return;
 
@@ -41,30 +42,33 @@ function activate(context) {
 			);
 		}
 
+		
+		
+
 		// const className = await vscode.window.showInputBox({
 		// prompt: "Class Name?"
 		// });
 
-		
-		
 		const className = path.parse(fileName).name;
 		if (!className) return;
 
 		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: className ${className}`);
 
 		// Allow the user to enter as many properties as they'd like:
-		let count = 1;
-		let property = await vscode.window.showInputBox({
-			prompt: `Property #${count}? ('done' when finished)`
-		});
+		// let count = 1;
+		// let property = await vscode.window.showInputBox({
+		// 	prompt: `Property #${count}? ('done' when finished)`
+		// });
 		const properties = [];
-		while (property != "done") {
-			properties.push(property);
-			count++;
-			property = await vscode.window.showInputBox({
-				prompt: `Property #${count}? ('done' when finished)`
-			});
-		}
+		// while (property != "done") {
+		// 	properties.push(property);
+		// 	count++;
+		// 	property = await vscode.window.showInputBox({
+		// 		prompt: `Property #${count}? ('done' when finished)`
+		// 	});
+		// }
+
+		properties.push('parent=None');
 
 		// Create class content string:
 		const classDefinition = `class ${className}:`;
@@ -92,9 +96,9 @@ function activate(context) {
 	${dunderStrString}`;
 
 		// Write the file to disk
-		const folderPath = vscode.workspace.workspaceFolders[0].uri
-		.toString()
-		.split(":")[1];
+		// const folderPath = vscode.workspace.workspaceFolders[0].uri
+		// .toString()
+		// .split(":")[1];
 
 		fs.writeFile(path.join(folderPath, `${className}.py`), classString, err => {
 			if (err) {
