@@ -19,8 +19,20 @@ function activate(context) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('extension.createMatchingPyQtClass', async function () {
+	let disposable = vscode.commands.registerCommand('extension.createMatchingPyQtClass', async function (contextPassed) {
 		// The code you place here will be executed every time your command is executed
+		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: contextPassed ${contextPassed}`);
+		
+		var filesystemPath = contextPassed.fsPath
+		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: filesystemPath ${filesystemPath}`);
+
+
+		// resourceFilename
+		var fileName = filesystemPath.substring(filesystemPath.lastIndexOf('/')+1);
+		// var filename = filesystemPath.replace(/^.*[\\\/]/, '')
+		if (!fileName) return;
+
+		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: fileName ${fileName}`);
 
 		// Copied from "https://scotch.io/tutorials/creating-a-python-class-generator-for-vs-code"
 		if (!vscode.workspace.workspaceFolders) {
@@ -29,11 +41,16 @@ function activate(context) {
 			);
 		}
 
-		const className = await vscode.window.showInputBox({
-		prompt: "Class Name?"
-		});
+		// const className = await vscode.window.showInputBox({
+		// prompt: "Class Name?"
+		// });
+
 		
+		
+		const className = path.parse(fileName).name;
 		if (!className) return;
+
+		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: className ${className}`);
 
 		// Allow the user to enter as many properties as they'd like:
 		let count = 1;

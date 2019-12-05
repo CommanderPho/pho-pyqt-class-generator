@@ -19,7 +19,14 @@
 				"command": "extension.createMatchingPyQtClass",
 				"title": "Create matching PyQt class"
 			}
-		]
+		],
+		"menus": {
+		  "explorer/context": [{
+			  "when": "resourceExtname == .ui",
+			  "command": "extension.createMatchingPyQtClass",
+			  "group": "YourGroup@1"
+		}]
+	  }
 	},
 	"scripts": {
 		"test": "node ./test/runTest.js"
