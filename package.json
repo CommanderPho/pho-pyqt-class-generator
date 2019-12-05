@@ -2,7 +2,7 @@
 	"name": "pho-pyqt-class-generator",
 	"displayName": "Pho PyQt Class Generator",
 	"description": "Automatically generates a boilerplate matching .py file for a .ui file created in Qt Designer",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"engines": {
 		"vscode": "^1.40.0"
 	},
@@ -21,12 +21,14 @@
 			}
 		],
 		"menus": {
-		  "explorer/context": [{
-			  "when": "resourceExtname == .ui",
-			  "command": "extension.createMatchingPyQtClass",
-			  "group": "YourGroup@1"
-		}]
-	  }
+			"explorer/context": [
+				{
+					"when": "resourceExtname == .ui",
+					"command": "extension.createMatchingPyQtClass",
+					"group": "YourGroup@1"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"test": "node ./test/runTest.js"
