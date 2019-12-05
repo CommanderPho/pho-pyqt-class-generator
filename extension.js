@@ -48,63 +48,39 @@ function activate(context) {
 	// The commandId parameter must match the command field in package.json
 	let disposable = vscode.commands.registerCommand('extension.createMatchingPyQtClass', async function (contextPassed) {
 		// The code you place here will be executed every time your command is executed
-		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: contextPassed ${contextPassed}`);
+		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: contextPassed ${contextPassed}`);
 		
+		// Class properties to add to our new class. Untested.
+		const properties = [];
+		// properties.push('parent');
+
+
 		const filesystemPath = contextPassed.fsPath;
+		const fileName = filesystemPath.substring(filesystemPath.lastIndexOf('/')+1);
+		if (!fileName) return;
 		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: filesystemPath ${filesystemPath}`);
 		// See "https://stackoverflow.com/questions/29496515/get-directory-from-a-file-path-or-url". Could also use "e.substr(0, e.lastIndexOf("/"))"
 		const folderPath = path.dirname(filesystemPath);
+		// Build the new .py class name from the .ui filename
+		const className = path.parse(fileName).name;
+		if (!className) return;
 
-		// resourceFilename
-
-		const fileName = filesystemPath.substring(filesystemPath.lastIndexOf('/')+1);
-		// var filename = filesystemPath.replace(/^.*[\\\/]/, '')
-		if (!fileName) return;
-
-		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: fileName ${fileName}`);
-
+		// Get the workspace project folder:
 		// Copied from "https://scotch.io/tutorials/creating-a-python-class-generator-for-vs-code"
 		if (!vscode.workspace.workspaceFolders) {
 			return vscode.window.showErrorMessage(
 			  "Please open a directory before creating a class."
 			);
 		}
-
-		const className = path.parse(fileName).name;
-		if (!className) return;
-
-		// vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: className ${className}`);
-
-		if (!vscode.workspace.workspaceFolders) {
-			return vscode.window.showErrorMessage(
-			  "Please open a directory before creating a class."
-			);
-		}
-		// const workspacePath = vscode.workspace.workspaceFolders[0].uri
-		// .toString()
-		// .split(":")[1];
-
 		const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
-		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: workspacePath ${workspacePath}`);
-		// const folderPath = vscode.workspace.workspaceFolders[0].uri
-		// .toString()
-		// .split(":")[1];
-
+		// Use the workspace project folder path and the file path to build the relative paths. Used in the initializer to specify the location of the .ui file and in the header comment to specify how to import our generated classes in another class
 		const relativeFilePathBackslashes = getRelativePath(workspacePath, filesystemPath)
 		const relativeFilePath = relativeFilePathBackslashes.replace(/\\/g, "/");
 		const relativeParentPath = path.dirname(relativeFilePath)
 
-		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: relativeFilePath ${relativeFilePath}`);
-		vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: relativeParentPath ${relativeParentPath}`);
-
 		const relativePythonPathParts = relativeParentPath.split("/"); // An array of the parts (like ["GUI", "UI", "NewClassDialog"])
-		// relativePythonPathParts.push('parent');
-		// relativePythonPathParts.push('parent');
 		const externalImportComment = `from ${relativePythonPathParts.join(".")} import ${className}`
-
-		const properties = [];
-		// properties.push('parent');
 
 		// Create class content string:
 		const commentHeader = `# ${className}.py
@@ -126,10 +102,8 @@ from PyQt5.QtCore import Qt, QPoint, QRect, QObject, QEvent, pyqtSignal, pyqtSlo
 
 `;
 
-		//self.ui = uic.loadUi("GUI/UI/${className}/${fileName}", self) # Load the .ui file
 		const classDefinition = `class ${className}(QWidget):`;
 		const allInitializerPropertyArguments = properties.concat(["parent=None"])
-		// const propertiesInitializerString = properties.join(", ")
 		const propertiesInitializerString = allInitializerPropertyArguments.join(", ")
 		
 		const constructorDefinition = `\tdef __init__(self, ${propertiesInitializerString}):`;
