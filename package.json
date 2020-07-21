@@ -2,7 +2,9 @@
 	"name": "pho-pyqt-class-generator",
 	"displayName": "Pho PyQt Class Generator",
 	"description": "Automatically generates a boilerplate matching .py file for a .ui file created in Qt Designer",
+	"publisher": "phohale",
 	"version": "0.1.0",
+	"repository": "https://github.com/CommanderPho/pho-pyqt-class-generator.git",
 	"engines": {
 		"vscode": "^1.40.0"
 	},
