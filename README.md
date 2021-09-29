@@ -1,6 +1,6 @@
 # pho-pyqt-class-generator README
 
-Generates a .py PyQt5 file from a Qt Designer generated .ui file. 
+A Visual Studio Code (VSCode) Extension that allows generation of a .py PyQt5 file from a Qt Designer generated .ui file via context menu. 
 
 ## Features
 
