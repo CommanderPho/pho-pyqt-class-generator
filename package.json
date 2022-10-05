@@ -3,7 +3,7 @@
 	"displayName": "Pho PyQt Class Generator",
 	"description": "Automatically generates a boilerplate matching .py file for a .ui file created in Qt Designer",
 	"publisher": "phohale",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"repository": "https://github.com/CommanderPho/pho-pyqt-class-generator.git",
 	"engines": {
 		"vscode": "^1.40.0"
@@ -12,7 +12,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.createMatchingPyQtClass"
+		"onCommand:extension.createMatchingPyQtClass",
+		"onCommand:extension.createMatchingPyQtClassFromAUTOGEN"
 	],
 	"main": "./extension.js",
 	"contributes": {
@@ -20,6 +21,10 @@
 			{
 				"command": "extension.createMatchingPyQtClass",
 				"title": "Create matching PyQt class"
+			},
+			{
+				"command": "extension.createMatchingPyQtClassFromAUTOGEN",
+				"title": "Create matching PyQt class (From Uic_AUTOGEN)"
 			}
 		],
 		"menus": {
@@ -27,6 +32,11 @@
 				{
 					"when": "resourceExtname == .ui",
 					"command": "extension.createMatchingPyQtClass",
+					"group": "YourGroup@1"
+				},
+				{
+					"when": "resourceExtname == .ui",
+					"command": "extension.createMatchingPyQtClassFromAUTOGEN",
 					"group": "YourGroup@1"
 				}
 			]

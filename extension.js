@@ -4,9 +4,10 @@ const vscode = require('vscode');
 const fs = require("fs");
 const path = require("path");
 
+
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-
 /**
  * Given a source directory and a target filename, return the relative
  * file path from source to target.
@@ -42,21 +43,43 @@ function getRelativePath(source, target) {
  * @param fileName {String} directory path and filename to seek from source
  * @return Relative path (e.g. "../../style.css") as {String}
  */
-function buildOldFile(className, fileName, relativeFilePath, externalImportComment, properties) {
+function buildOldFile(className, fileName, relativeFilePath, externalImportComment, properties, shouldUseUic) {
         // const indentationSymbol = `\t`; // 1 tab
         const indentationSymbol = `    `; // 4 spaces
 
         const uiFileName = `${className}.ui`;
 
+        var methodAppropriateExtendedImports = '';
+        var methodAppropriateLoadCommand = '';
+        if (shouldUseUic) {
+            const uicLoadUIPath = `
+## Define the .ui file path
+path = os.path.dirname(os.path.abspath(__file__))
+uiFile = os.path.join(path, '${uiFileName}')
+`;
+            methodAppropriateExtendedImports = uicLoadUIPath;
+            methodAppropriateLoadCommand = `self.ui = uic.loadUi(uiFile, self) # Load the .ui file`
+
+        }
+        else {
+            // Non-UIC Version:
+            const autogenClassname = `Uic_AUTOGEN_${className}`
+            const autogenClassFormName = `Ui_Form`; // Usually Ui_Form but must be changed if set in QtDesigner (e.g. Ui_SingleGroupOptionalMembersCtrl)
+
+            // const UicAutogenImport = `from pyphoplacecellanalysis.GUI.Qt.FigureFormatConfigControls.${autogenClassname} import Ui_Form`;
+            const UicAutogenImport = `from .${autogenClassname} import ${autogenClassFormName}
+`;
+            methodAppropriateExtendedImports = UicAutogenImport;
+            methodAppropriateLoadCommand = `self.ui = ${autogenClassFormName}()
+${indentationSymbol}${indentationSymbol}self.ui.setupUi(self) # builds the design from the .ui onto this widget.
+`;
+        }
+
         // Create class content string:
         const commentHeader = `# ${className}.py
 # Generated from ${fileName} automatically by PhoPyQtClassGenerator VSCode Extension`;
 
-        const uicLoadUIPath = `
-## Define the .ui file path
-path = os.path.dirname(os.path.abspath(__file__))
-uiFile = os.path.join(path, '${uiFileName}')
-`
+        
 
         const headerDefinition = `
 import sys
@@ -70,8 +93,7 @@ from PyQt5.QtCore import Qt, QPoint, QRect, QObject, QEvent, pyqtSignal, pyqtSlo
 
 ## IMPORTS:
 # ${externalImportComment}
-
-${uicLoadUIPath}
+${methodAppropriateExtendedImports}
 `;
         const classDefinition = `class ${className}(QWidget):`;
         const allInitializerPropertyArguments = properties.concat(["parent=None"])
@@ -81,7 +103,7 @@ ${uicLoadUIPath}
 ${indentationSymbol}def __init__(self, ${propertiesInitializerString}):`;
         const constructorPreAssignmentInitialization = `
 ${indentationSymbol}${indentationSymbol}super().__init__(parent=parent) # Call the inherited classes __init__ method
-${indentationSymbol}${indentationSymbol}self.ui = uic.loadUi(uiFile, self) # Load the .ui file
+${indentationSymbol}${indentationSymbol}${methodAppropriateLoadCommand}
 `;
         const constructorPostAssignmentInitialization = `
 ${indentationSymbol}${indentationSymbol}self.initUI()
@@ -142,6 +164,56 @@ if __name__ == '__main__':${rawQtTestAppSetupString}`;
 
 
 
+function createMatchingPyQtClass(contextPassed, shouldUseUic) {
+    // Class properties to add to our new class. Untested.
+    const properties = [];
+    // properties.push('parent');
+
+    const filesystemPath = contextPassed.fsPath;
+    const fileName = filesystemPath.substring(filesystemPath.lastIndexOf('/')+1);
+    if (!fileName) return;
+    // vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: filesystemPath ${filesystemPath}`);
+    // See "https://stackoverflow.com/questions/29496515/get-directory-from-a-file-path-or-url". Could also use "e.substr(0, e.lastIndexOf("/"))"
+    const folderPath = path.dirname(filesystemPath);
+    // Build the new .py class name from the .ui filename
+    const className = path.parse(fileName).name;
+    if (!className) return;
+
+    // Get the workspace project folder:
+    // Copied from "https://scotch.io/tutorials/creating-a-python-class-generator-for-vs-code"
+    if (!vscode.workspace.workspaceFolders) {
+        return vscode.window.showErrorMessage(
+            "Please open a directory before creating a class."
+        );
+    }
+    const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+
+    // Use the workspace project folder path and the file path to build the relative paths. Used in the initializer to specify the location of the .ui file and in the header comment to specify how to import our generated classes in another class
+    const relativeFilePathBackslashes = getRelativePath(workspacePath, filesystemPath)
+    const relativeFilePath = relativeFilePathBackslashes.replace(/\\/g, "/");
+    // const relativeParentPath = path.dirname(relativeFilePath)
+    //// For building the python import path. Does not yet work
+    // const relativePythonPathParts = relativeParentPath.split("/"); // An array of the parts (like ["GUI", "UI", "NewClassDialog"])
+    // const externalImportComment = `from ${relativePythonPathParts.join(".")} import ${className}` // Unfortunately produces '# from ...pyPhoPlaceCellAnalysis.src.pyphoplacecellanalysis.GUI.Qt.IdentifyingContextSelector import IdentifyingContextSelectorWidget'
+    const externalImportComment = ``;
+
+    const classString = buildOldFile(className, fileName, relativeFilePath, externalImportComment, properties, shouldUseUic);
+
+    // Write the file to disk
+    fs.writeFile(path.join(folderPath, `${className}.py`), classString, err => {
+        if (err) {
+            vscode.window.showErrorMessage("Something went wrong");
+            return console.log(err);
+        }
+        vscode.window.showInformationMessage(`${className} Class created.`);
+        });
+
+    // Display a message box to the user
+    // vscode.window.showInformationMessage('Hello World!');
+}
+
+
+
 /**
  * @param {vscode.ExtensionContext} context
  */
@@ -157,55 +229,21 @@ function activate(context) {
     let disposable = vscode.commands.registerCommand('extension.createMatchingPyQtClass', async function (contextPassed) {
         // The code you place here will be executed every time your command is executed
         // vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: contextPassed ${contextPassed}`);
-        
-        // Class properties to add to our new class. Untested.
-        const properties = [];
-        // properties.push('parent');
 
-
-        const filesystemPath = contextPassed.fsPath;
-        const fileName = filesystemPath.substring(filesystemPath.lastIndexOf('/')+1);
-        if (!fileName) return;
-        // vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: filesystemPath ${filesystemPath}`);
-        // See "https://stackoverflow.com/questions/29496515/get-directory-from-a-file-path-or-url". Could also use "e.substr(0, e.lastIndexOf("/"))"
-        const folderPath = path.dirname(filesystemPath);
-        // Build the new .py class name from the .ui filename
-        const className = path.parse(fileName).name;
-        if (!className) return;
-
-        // Get the workspace project folder:
-        // Copied from "https://scotch.io/tutorials/creating-a-python-class-generator-for-vs-code"
-        if (!vscode.workspace.workspaceFolders) {
-            return vscode.window.showErrorMessage(
-              "Please open a directory before creating a class."
-            );
-        }
-        const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-
-        // Use the workspace project folder path and the file path to build the relative paths. Used in the initializer to specify the location of the .ui file and in the header comment to specify how to import our generated classes in another class
-        const relativeFilePathBackslashes = getRelativePath(workspacePath, filesystemPath)
-        const relativeFilePath = relativeFilePathBackslashes.replace(/\\/g, "/");
-        const relativeParentPath = path.dirname(relativeFilePath)
-
-        const relativePythonPathParts = relativeParentPath.split("/"); // An array of the parts (like ["GUI", "UI", "NewClassDialog"])
-        const externalImportComment = `from ${relativePythonPathParts.join(".")} import ${className}`
-
-        const classString = buildOldFile(className, fileName, relativeFilePath, externalImportComment, properties);
-
-        // Write the file to disk
-        fs.writeFile(path.join(folderPath, `${className}.py`), classString, err => {
-            if (err) {
-              vscode.window.showErrorMessage("Something went wrong");
-              return console.log(err);
-            }
-            vscode.window.showInformationMessage(`${className} Class created.`);
-          });
-
-        // Display a message box to the user
-        // vscode.window.showInformationMessage('Hello World!');
+        // If shouldUseUic = true, the .ui file is loaded directly using uic. If False, a `Uic_AUTOGEN_${className}` is required to have already been generated by Uic
+        const shouldUseUic = true;
+        createMatchingPyQtClass(contextPassed, shouldUseUic);
     });
-
     context.subscriptions.push(disposable);
+
+    let disposable2 = vscode.commands.registerCommand('extension.createMatchingPyQtClassFromAUTOGEN', async function (contextPassed) {
+        // The code you place here will be executed every time your command is executed
+        // vscode.window.showInformationMessage(`PhoPyQtClassGenerator Extension: Debug: contextPassed ${contextPassed}`);
+        const shouldUseUic = false;
+        createMatchingPyQtClass(contextPassed, shouldUseUic);
+    });
+    context.subscriptions.push(disposable2);
+
 }
 exports.activate = activate;
 
