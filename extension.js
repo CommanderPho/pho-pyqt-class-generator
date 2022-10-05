@@ -58,7 +58,8 @@ path = os.path.dirname(os.path.abspath(__file__))
 uiFile = os.path.join(path, '${uiFileName}')
 `
 
-        const headerDefinition = `import sys
+        const headerDefinition = `
+import sys
 import os
 
 from PyQt5 import QtGui, QtWidgets, uic
@@ -76,12 +77,15 @@ ${uicLoadUIPath}
         const allInitializerPropertyArguments = properties.concat(["parent=None"])
         const propertiesInitializerString = allInitializerPropertyArguments.join(", ")
         
-        const constructorDefinition = `${indentationSymbol}def __init__(self, ${propertiesInitializerString}):`;
-        const constructorPreAssignmentInitialization = `${indentationSymbol}${indentationSymbol}super().__init__(parent=parent) # Call the inherited classes __init__ method
-        self.ui = uic.loadUi(uiFile, self) # Load the .ui file
+        const constructorDefinition = `
+${indentationSymbol}def __init__(self, ${propertiesInitializerString}):`;
+        const constructorPreAssignmentInitialization = `
+${indentationSymbol}${indentationSymbol}super().__init__(parent=parent) # Call the inherited classes __init__ method
+${indentationSymbol}${indentationSymbol}self.ui = uic.loadUi(uiFile, self) # Load the .ui file
 `;
-        const constructorPostAssignmentInitialization = `${indentationSymbol}${indentationSymbol}self.initUI()
-        self.show() # Show the GUI
+        const constructorPostAssignmentInitialization = `
+${indentationSymbol}${indentationSymbol}self.initUI()
+${indentationSymbol}${indentationSymbol}self.show() # Show the GUI
 `;
         
         const constructorAssignments = properties
@@ -98,10 +102,16 @@ ${uicLoadUIPath}
         )
         .join("");
 
-        const dunderStrString = `${indentationSymbol}def __str__(self):\n ${indentationSymbol}${indentationSymbol}return ${properties
-            .map(property => '"' + property + ': "' + " + " + property + ' + " , " + ')
-            .join("")
-            .slice(0, -11)}`;
+        var dunderStrStringProperties = properties.map(property => '"' + property + ': "' + " + " + property + ' + " , " + ').join("").slice(0, -11);
+        var dunderStrString = ``;
+        if (dunderStrStringProperties) {
+            // dunderStrStringProperties = `'${className}'`
+            dunderStrString = `${indentationSymbol}def __str__(self):\n ${indentationSymbol}${indentationSymbol}return ${dunderStrStringProperties}`;
+        }
+        else {
+            dunderStrString = ``; // don't include a __str__ block
+        }
+        
 
 
         const rawQtTestAppSetupString = `
@@ -126,18 +136,7 @@ ${uicLoadUIPath}
 if __name__ == '__main__':${rawQtTestAppSetupString}`;
 
 
-        const classString = `${commentHeader}
-${headerDefinition}
-${classDefinition}
-${constructorDefinition}
-${constructorPreAssignmentInitialization}
-${constructorAssignments}
-${constructorPostAssignmentInitialization}
-${initUIFunctionDefinintion}
-${classGetters}
-${dunderStrString}
-${mainTestCodeString}
-`;
+        const classString = `${commentHeader}${headerDefinition}${classDefinition}${constructorDefinition}${constructorPreAssignmentInitialization}${constructorAssignments}${constructorPostAssignmentInitialization}${initUIFunctionDefinintion}${classGetters}${dunderStrString}${mainTestCodeString}`;
         return classString;
 }
 
