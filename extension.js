@@ -84,6 +84,7 @@ ${indentationSymbol}${indentationSymbol}self.ui.setupUi(self) # builds the desig
         const headerDefinition = `
 import sys
 import os
+from typing import Dict, List, Optional
 
 from PyQt5 import QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMessageBox, QToolTip, QStackedWidget, QHBoxLayout, QVBoxLayout, QSplitter, QFormLayout, QLabel, QFrame, QPushButton, QTableWidget, QTableWidgetItem
@@ -95,7 +96,7 @@ from PyQt5.QtCore import Qt, QPoint, QRect, QObject, QEvent, pyqtSignal, pyqtSlo
 # ${externalImportComment}
 ${methodAppropriateExtendedImports}
 `;
-        const classDefinition = `class ${className}(QWidget):`;
+        const classDefinition = `class ${className}(QtWidgets.QWidget):`;
         const allInitializerPropertyArguments = properties.concat(["parent=None"])
         const propertiesInitializerString = allInitializerPropertyArguments.join(", ")
         

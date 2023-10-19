@@ -1,0 +1,19 @@
+{
+	"workbench.colorCustomizations": {
+		"editor.lineHighlightBackground": "#1073cf2d",
+		"editor.lineHighlightBorder": "#9fced11f",
+		"activityBar.background": "#133327",
+		"titleBar.activeBackground": "#1A4836",
+		"titleBar.activeForeground": "#F6FBF9",
+		"scrollbarSlider.background": "#fffb0057",
+		"scrollbarSlider.hoverBackground": "#fffb0082",
+		"scrollbarSlider.activeBackground": "#ccff00df",
+		"activityBar.inactiveForeground": "#ffffff3c",
+		"activityBar.foreground": "#ffffff",
+		"notebook.outputContainerBackgroundColor": "#395a3e50",
+		"notebook.outputContainerBorderColor": "#10ff10",
+		"notebook.focusedCellBorder": "#ffff00da",
+		"notebook.focusedEditorBorder": "#f6ff00",
+		"notebook.inactiveFocusedCellBorder": "#ffff0063"
+	}
+}
