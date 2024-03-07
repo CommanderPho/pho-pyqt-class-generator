@@ -1,3 +1,5 @@
 node_modules
 .vscode-test/
 *.vsix
+desktop.ini
+FM-{1CBC03E1-200F-4DA6-BC03-3735B20808B4}.ico
