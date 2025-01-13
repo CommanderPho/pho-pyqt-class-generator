@@ -4,6 +4,9 @@ All notable changes to the "pho-pyqt-class-generator" extension will be document
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.2.0]
+- Added support to build Qt resources (.qrc) into .py files
+
 ## [0.1.3]
 - Fixed version
 
