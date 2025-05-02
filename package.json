@@ -25,7 +25,23 @@
 			{
 				"command": "extension.createMatchingPyQtClassFromAUTOGEN",
 				"title": "Create matching PyQt class (From Uic_AUTOGEN)"
-			}
+			},
+            {
+                "command": "pyqt-integration.editInDesigner",
+                "title": "PYQT: Edit In Designer"
+            },
+            {
+                "command": "pyqt-integration.Preview",
+                "title": "PYQT: Preview"
+            },
+            {
+                "command": "pyqt-integration.compileForm",
+                "title": "PYQT: Compile Form"
+            },
+            {
+                "command": "pyqt-integration.compileQRC",
+                "title": "PYQT: Compile Resource"
+            }
 		],
 		"menus": {
 			"explorer/context": [
@@ -38,9 +54,115 @@
 					"when": "resourceExtname == .ui",
 					"command": "extension.createMatchingPyQtClassFromAUTOGEN",
 					"group": "YourGroup@1"
-				}
+				},
+                {
+                    "command": "pyqt-integration.editInDesigner",
+                    "when": "resourceScheme == file && resourceExtname == .ui",
+                    "group": "pyqt-integration@3"
+                },
+                {
+                    "command": "pyqt-integration.compileForm",
+                    "when": "resourceScheme == file && resourceExtname == .ui",
+                    "group": "pyqt-integration@4"
+                },
+                {
+                    "command": "pyqt-integration.compileQRC",
+                    "when": "resourceScheme == file && resourceExtname == .qrc",
+                    "group": "pyqt-integration@5"
+                },
+                {
+                    "command": "pyqt-integration.pylupdate",
+                    "when": "resourceScheme == file && resourceExtname == .py",
+                    "group": "pyqt-integration@6"
+                }
 			]
-		}
+		},
+        "configuration": {
+            "title": "PYQT integration configuration",
+            "properties": {
+                "pyqt-integration.qtdesigner.path": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path of QT designer",
+                    "scope": "window"
+                },
+                "pyqt-integration.pyuic.cmd": {
+                    "type": "string",
+                    "default": "pyuic5",
+                    "description": "'pyuic' command file, you can also specify a path",
+                    "scope": "window"
+                },
+                "pyqt-integration.pyrcc.cmd": {
+                    "type": "string",
+                    "default": "pyrcc5",
+                    "description": "'pyrcc' command file, you can also specify a path",
+                    "scope": "window"
+                },
+                "pyqt-integration.pylupdate.cmd": {
+                    "type": "string",
+                    "default": "pylupdate5",
+                    "description": "'pylupdate' command file, you can also specify a path",
+                    "scope": "window"
+                },
+                "pyqt-integration.linguist.cmd": {
+                    "type": "string",
+                    "default": "linguist",
+                    "description": "'linguist' command file, you can also specify a path",
+                    "scope": "window"
+                },
+                "pyqt-integration.pyuic.compile.filepath": {
+                    "type": "string",
+                    "default": "Ui_${ui_name}.py",
+                    "description": "Target '.py' file path for compiling, relative path as default, switch to absolute path by involving ${workspace}, e.g. ${workspace}\\\\UI\\\\Ui_${ui_name}.py",
+                    "scope": "window"
+                },
+                "pyqt-integration.pyuic.compile.addOptions": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Additional options for pyuic compiling, it can be a combination of '-x', '-d', '-i', etc.",
+                    "scope": "window"
+                },
+                "pyqt-integration.pyrcc.compile.filepath": {
+                    "type": "string",
+                    "default": "${qrc_name}_rc.py",
+                    "description": "Target '.py' file path for compiling, relative path as default, switch to absolute path by involving ${workspace}, e.g. ${workspace}\\\\QRC\\\\${qrc_name}_rc.py",
+                    "scope": "window"
+                },
+                "pyqt-integration.pyrcc.compile.addOptions": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Additional options for pyrcc compiling, it can be a combination of '-root', '-threshold', '-compress', '-no-compress', etc.",
+                    "scope": "window"
+                },
+                "pyqt-integration.pylupdate.compile.filepath": {
+                    "type": "string",
+                    "default": "${ts_name}.ts",
+                    "description": "Only works when compiling an UI file (.py), Stands for the target '.ts' file's path, relative path as default, switch to absolute path by involving ${workspace}, e.g. ${workspace}\\\\TS\\\\${ts_name}.ts",
+                    "scope": "window"
+                },
+                "pyqt-integration.pylupdate.compile.addOptions": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Additional options for pylupdate, it can be a combination of '-verbose', '-noobsolete', '-tr-function', '-translate-function', etc.",
+                    "scope": "window"
+                }
+            }
+        },
+        "languages": [
+            {
+                "id": "css",
+                "extensions": [
+                    ".qss"
+                ]
+            },
+            {
+                "id": "xml",
+                "extensions": [
+                    ".ui",
+                    ".qrc"
+                ]
+            }
+        ]
 	},
 	"scripts": {
 		"test": "node ./test/runTest.js"
